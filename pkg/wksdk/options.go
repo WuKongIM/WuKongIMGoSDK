@@ -14,6 +14,7 @@ type Options struct {
 	ProtoVersion   int
 	PingInterval   time.Duration // 心跳间隔
 	Reconnect      bool          // 是否自动重连
+	AutoAck        bool          // 是否自动ack
 }
 
 // NewOptions creates a new options.
@@ -24,6 +25,7 @@ func NewOptions() *Options {
 		proto:          wkproto.New(),
 		PingInterval:   time.Second * 30,
 		Reconnect:      true,
+		AutoAck:        true,
 	}
 }
 
@@ -62,5 +64,11 @@ func WithPingInterval(interval time.Duration) Option {
 func WithReconnect(reconnect bool) Option {
 	return func(opt *Options) {
 		opt.Reconnect = reconnect
+	}
+}
+
+func WithAutoAck(autoAck bool) Option {
+	return func(opt *Options) {
+		opt.AutoAck = autoAck
 	}
 }

@@ -1,5 +1,7 @@
 package wksdk
 
+import wkproto "github.com/WuKongIM/WuKongIMGoProto"
+
 // SendOptions SendOptions
 type SendOptions struct {
 	NoPersist   bool // 是否不存储 默认 false
@@ -59,4 +61,9 @@ func SendOptionWithNoEncrypt(noEncrypt bool) SendOption {
 		opts.NoEncrypt = noEncrypt
 		return nil
 	}
+}
+
+type Message struct {
+	wkproto.RecvPacket
+	Ack func() error
 }

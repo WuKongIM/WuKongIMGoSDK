@@ -16,6 +16,8 @@ import (
 
 type listenerConnFnc func(connectStatus ConnectStatus, reasonCode wkproto.ReasonCode)
 
+type listenerMsgFnc func(msg *Message)
+
 type Client struct {
 	addr string
 	opts *Options
@@ -30,6 +32,7 @@ type Client struct {
 	connectStatus ConnectStatus
 
 	listenerConnFnc listenerConnFnc
+	listenerMsgFnc  listenerMsgFnc
 
 	stopped         bool // 是否已停止
 	forceDisconnect bool // 是否强制关闭
@@ -226,6 +229,8 @@ func (c *Client) handleFrame(frame wkproto.Frame, conn net.Conn) {
 		c.handlePong(frame, conn)
 	case wkproto.SENDACK:
 		c.handleSendack(frame, conn)
+	case wkproto.RECV:
+		c.handleRecv(frame, conn)
 
 	}
 }
@@ -249,6 +254,36 @@ func (c *Client) handlePong(frame wkproto.Frame, conn net.Conn) {
 	}
 	if ch != nil {
 		ch <- struct{}{}
+	}
+}
+
+func (c *Client) handleRecv(frame wkproto.Frame, conn net.Conn) {
+	recv := frame.(*wkproto.RecvPacket)
+
+	decodePayload, err := wkutil.AesDecryptPkcs7Base64(recv.Payload, []byte(c.aesKey), []byte(c.salt))
+	if err != nil {
+		panic(err)
+	}
+	recv.Payload = decodePayload
+
+	msg := &Message{
+		RecvPacket: *recv,
+	}
+	msg.Ack = c.ackMessage(msg)
+	if c.opts.AutoAck {
+		err := msg.Ack()
+		if err != nil {
+			fmt.Println("ack error:", err)
+		}
+	}
+	if c.listenerMsgFnc != nil {
+		c.listenerMsgFnc(msg)
+	}
+}
+
+func (c *Client) ackMessage(msg *Message) func() error {
+	return func() error {
+		return c.sendRecvack(msg.MessageID, msg.MessageSeq)
 	}
 }
 
@@ -321,6 +356,14 @@ func (c *Client) sendPing(ch chan struct{}) error {
 	}
 	_, err = c.conn.Write(data)
 	return err
+}
+
+func (c *Client) sendRecvack(messageID int64, messageSeq uint32) error {
+	recvack := &wkproto.RecvackPacket{
+		MessageID:  messageID,
+		MessageSeq: messageSeq,
+	}
+	return c.sendPacket(recvack)
 }
 
 func (c *Client) connectStatusChange(connectStatus ConnectStatus) {

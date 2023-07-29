@@ -18,6 +18,10 @@ func (c *Client) OnConnect(listener listenerConnFnc) {
 	c.listenerConnFnc = listener
 }
 
+func (c *Client) OnMessage(listener listenerMsgFnc) {
+	c.listenerMsgFnc = listener
+}
+
 // SendMessage sends a message to the server.
 func (c *Client) SendMessage(payload []byte, channel wkproto.Channel, opt ...SendOption) (*wkproto.SendackPacket, error) {
 

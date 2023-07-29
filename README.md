@@ -37,7 +37,7 @@ result,_ := cli.SendMessage(content,channel)
 
 ```go
 
-cli.OnRecv(func(m *Message) {
+cli.OnMessage(func(m *Message) {
     //TODO
 })
 
