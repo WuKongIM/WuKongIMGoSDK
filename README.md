@@ -3,7 +3,12 @@
 引入包
 
 ```go
-import wksdk "github.com/WuKongIM/WuKongIMGoSDK"
+go get github.com/WuKongIM/WuKongIMGoSDK
+```
+
+使用
+```go
+import  "github.com/WuKongIM/WuKongIMGoSDK/pkg/wksdk"
 ```
 
 初始化
